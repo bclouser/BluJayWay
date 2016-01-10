@@ -2,6 +2,7 @@
 module.exports = function(io, tcpServer) {
     var express = require('express');
     var router = express.Router();
+    var secrets = require('../secrets');
 
     /* GET home page. */
     router.get('/', function(req, res, next) {
