@@ -31,7 +31,7 @@ var map;
 function initMap(){
 	map = new google.maps.Map(document.getElementById('map'), {
 		center: {lat: 38.954, lng: -77.346},
-		zoom: 16
+		zoom: 15
 	});
 	marker = new google.maps.Marker( {position: map.center, map: map} );
 	marker.setMap( map );
