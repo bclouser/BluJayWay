@@ -23,12 +23,16 @@ def initDevicesState():
 	try:
 		gpsHandler.init()
 	except:
+		print "Oh snap, caught exception while Initializing gps handler"
 		return State.initDevices
 	while(not gpsHandler.deviceReady()):
+		print "Waiting for gps device to be ready"
 		time.sleep(waitSeconds)
 		if(timeoutCnter*waitSeconds >= maxSecondsTillReady):
 			return State.initDevices
 		++timeoutCntr
+	print "Leaving initDevicesState"
+	return State.waitForLocation
 		
 
 	#wifiHandler.init()
@@ -48,6 +52,8 @@ def waitForLocationState():
 		if(timeoutCnter*waitSeconds >= maxSecondsTillReady):
 			return State.initDevices
 		++timeoutCntr
+	return State.waitForWifi
+
 
 # Verify connection
 def waitForWifiState():
@@ -56,6 +62,7 @@ def waitForWifiState():
 		if(timeoutCnter*waitSeconds >= maxSecondsTillReady):
 			return State.initDevices
 		++timeoutCntr
+	return State.waitForServer
 
 # establish server connection
 def waitForServerState():
@@ -65,36 +72,52 @@ def waitForServerState():
 
 	return State.everyoneReady
 
+class Client:
+	def publishCoords(self, coords):
+		lat,lon = coords
+		print "publishing coordinates"
+		print "lat = " + str(lat)
+		print "lon = " + str(lon)
 
-currentState = initDevices
+
+client = Client()
+
+currentState = State.initDevices
 
 # Our main loop
 while(True):
-	if(currentState == initDevices):
+	if(currentState == State.initDevices):
+		print "Initializing devices"
 		currentState = initDevicesState()
 
-	elif(currentState == waitForLocation):
+	elif(currentState == State.waitForLocation):
+		print "waiting for location"
 		currentState = waitForLocationState()
 
-	elif(currentState == waitForWifi):
+	elif(currentState == State.waitForWifi):
+		print "waiting for wifi"
 		currentState = waitForWifiState()
 
-	elif(currentState == waitForServer):
+	elif(currentState == State.waitForServer):
+		print "waiting for server"
 		currentState = waitForServerState()
 
 	# Publish coordinates loop
-	while( currentState == everyoneReady ): 
-		coords
+	while( currentState == State.everyoneReady ): 
 		try:
+			print "Getting gps coords"
 			coords = gpsHandler.getCoords()
+			print coords
 		except:
-			currentState=waitForLocationState
+			print "Getting coords failed"
+			currentState=State.waitForLocation
 		
-		try:
-			client.publishCoords(coords)
-		except:
-			currentState = waitForWifi
+		#try:
+		print "Publishing coordinates"
+		client.publishCoords( coords )
+		# except Exception,e:
+		# 	print "Publishing coords failed"
+		# 	print str(e)
+		# 	currentState = State.waitForWifi
 
 		time.sleep(gpsReportIntervalSeconds)
-
-

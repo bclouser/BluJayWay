@@ -31,3 +31,7 @@ npm-debug.log
 
 # Secret things like api keys, passwords, etc.
 secrets.js
+
+
+# Python ish
+*.pyc
