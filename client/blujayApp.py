@@ -75,7 +75,6 @@ def waitForServerState():
 class Client:
 	def publishCoords(self, coords):
 		lat,lon = coords
-		print "publishing coordinates"
 		print "lat = " + str(lat)
 		print "lon = " + str(lon)
 
@@ -121,3 +120,4 @@ while(True):
 		# 	currentState = State.waitForWifi
 
 		time.sleep(gpsReportIntervalSeconds)
+		print "" # Aesthetics are everything
