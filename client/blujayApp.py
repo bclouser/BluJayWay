@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import time
 import gpsHandler
 import wifiHandler
@@ -22,13 +23,17 @@ def initDevicesState():
 	timeoutCntr = 0
 	try:
 		gpsHandler.init()
-	except:
-		print "Oh snap, caught exception while Initializing gps handler"
-		return State.initDevices
-	while(not gpsHandler.deviceReady()):
-		print "Waiting for gps device to be ready"
+
+	except Exception, e:
 		time.sleep(waitSeconds)
-		if(timeoutCnter*waitSeconds >= maxSecondsTillReady):
+		print "Oh snap, caught exception while Initializing gps handler"
+		print str(e)
+		return State.initDevices
+
+	while(not gpsHandler.deviceReady()):
+		print "Waiting "+str(waitSeconds)+ " seconds for gps device to be ready"
+		time.sleep(waitSeconds)
+		if(timeoutCntr*waitSeconds >= maxSecondsTillReady):
 			return State.initDevices
 		++timeoutCntr
 	print "Leaving initDevicesState"
@@ -49,7 +54,7 @@ def waitForLocationState():
 
 	while(not gpsHandler.hasLocationFix()):
 		time.sleep(waitSeconds)
-		if(timeoutCnter*waitSeconds >= maxSecondsTillReady):
+		if(timeoutCntr*waitSeconds >= maxSecondsTillReady):
 			return State.initDevices
 		++timeoutCntr
 	return State.waitForWifi
@@ -59,7 +64,7 @@ def waitForLocationState():
 def waitForWifiState():
 	while(not wifiHandler.networkReady()):
 		time.sleep(waitSeconds)
-		if(timeoutCnter*waitSeconds >= maxSecondsTillReady):
+		if(timeoutCntr*waitSeconds >= maxSecondsTillReady):
 			return State.initDevices
 		++timeoutCntr
 	return State.waitForServer
