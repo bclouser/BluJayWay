@@ -10,6 +10,7 @@ waitSeconds = 2
 maxSecondsTillReady = 60
 gpsReportIntervalSeconds = 5
 
+# This is a flippin enum!
 class State:
 	initDevices = 1
 	waitForLocation = 2
@@ -47,12 +48,12 @@ def initDevicesState():
 # Wait for Gps location fix
 def waitForLocationState():
 	timeoutCntr = 0
-	try:
-		gpsHandler.getFix()
-	except:
-		return State.initDevices
-
 	while(not gpsHandler.hasLocationFix()):
+		try:
+			gpsHandler.getFix()
+		except:
+			return State.initDevices
+
 		time.sleep(waitSeconds)
 		if(timeoutCntr*waitSeconds >= maxSecondsTillReady):
 			return State.initDevices

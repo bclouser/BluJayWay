@@ -1,6 +1,9 @@
 import subprocess
+import time
 import gps
 
+lat = 0
+lon = 0
 # Declaring some globals... i really should make this a legit python module
 gpsdConnection = None
 hasFix = False
@@ -9,7 +12,13 @@ def init():
 	print "Initializing gps"
 
 	try:
-		result = subprocess.check_output(['sudo gpsd /dev/ttyUSB0 -F /var/run/gpsd.sock'], shell=True, stderr=subprocess.STDOUT)
+		# Kill it before starting it again
+		result = subprocess.call(['sudo killall gpsd'], shell=True, stderr=subprocess.STDOUT)
+		if(result == 0):
+			print "Didn't kill gpsd... likely it isn't running"
+		# Give it a second
+		time.sleep(1)
+		result = subprocess.check_output(['sudo gpsd /dev/ttyAMA0 -F /var/run/gpsd.sock'], shell=True, stderr=subprocess.STDOUT)
 	except Exception, e:
 		print "Caught error in gpsHandler init():"
 		print str(e)
@@ -62,6 +71,8 @@ def deviceReady():
 
 def getFix():
 	print "Gettin my fix! -gps device"
+	global lat
+	global lon
 	global gpsdConnection
 	global hasFix
 	try:
@@ -71,9 +82,11 @@ def getFix():
 		print report
 
 		# Check that our response has gps coords and a valid fix
-		#if report['class'] == 'VERSION':
-		#	hasFix = True
-		#	return True
+		if report['lat'] and report['lon']:
+			lat = report['lat']
+			lon = report['lon']
+			hasFix = True
+			return True
 
 		return False
 
@@ -81,6 +94,9 @@ def getFix():
 		gpsdConnection = None
 		print "GPSD has terminated"
 		return False
+
+	except KeyError:
+		pass
 
 	except Exception, e:
 		print str(e)
@@ -92,4 +108,34 @@ def hasLocationFix():
 	return hasFix
 
 def getCoords():
-	return (0.0, 0.0)
+	global lat
+	global lon
+	global gpsdConnection
+
+	try:
+		# This locks up if we don't get a fix after 3 tries
+		report = gpsdConnection.next()
+		#print "report:"
+		#print report
+
+		# Check that our response has gps coords and a valid fix
+		if report['lat'] and report['lon']:
+			lat = report['lat']
+			lon = report['lon']
+			hasFix = True
+			return (lat, lon)
+
+		return False
+
+	except StopIteration:
+		gpsdConnection = None
+		print "GPSD has terminated"
+		return False
+
+	except KeyError:
+		pass
+
+	except Exception, e:
+		print str(e)
+		print "LEaving deviceReady()"
+		return False
