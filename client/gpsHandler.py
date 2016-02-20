@@ -14,8 +14,12 @@ def init():
 	try:
 		# Kill it before starting it again
 		result = subprocess.call(['sudo killall gpsd'], shell=True, stderr=subprocess.STDOUT)
-		if(result == 0):
-			print "Didn't kill gpsd... likely it isn't running"
+		#killall returns a zero return code if at least one process has been killed returns non-zero otherwise.
+		if(result != 0):
+			print "Couldn't kill gpsd... likely it isn't running"
+		else:
+			print "There was an existing instance of gpsd so I killed it"
+
 		# Give it a second
 		time.sleep(1)
 		result = subprocess.check_output(['sudo gpsd /dev/ttyAMA0 -F /var/run/gpsd.sock'], shell=True, stderr=subprocess.STDOUT)
@@ -79,7 +83,7 @@ def getFix():
 		# This locks up if we don't get a fix after 3 tries
 		report = gpsdConnection.next()
 		print "report:"
-		print report
+		print str(report)+"\n"
 
 		# Check that our response has gps coords and a valid fix
 		if report['lat'] and report['lon']:
@@ -114,16 +118,13 @@ def getCoords():
 
 	try:
 		# This locks up if we don't get a fix after 3 tries
-		report = gpsdConnection.next()
-		#print "report:"
-		#print report
+		# pretty sure the process is blocking on the socket waiting for new data.
+		# I should make that baby poll.
 
-		# Check that our response has gps coords and a valid fix
-		if report['lat'] and report['lon']:
-			lat = report['lat']
-			lon = report['lon']
-			hasFix = True
-			return (lat, lon)
+		lat = gpsdConnection.fix.latitude
+		lon = gpsdConnection.fix.longitude
+		hasFix = True
+		return (lat, lon)
 
 		return False
 

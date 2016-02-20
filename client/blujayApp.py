@@ -3,12 +3,17 @@
 import os
 import sys
 import time
+import socket
+import subprocess
+
 import gpsHandler
 import wifiHandler
+import gpsClient
 
 waitSeconds = 2
 maxSecondsTillReady = 60
 gpsReportIntervalSeconds = 5
+serverName = "testpit.benclouser.com"
 
 # This is a flippin enum!
 class State:
@@ -72,20 +77,22 @@ def waitForWifiState():
 
 # establish server connection
 def waitForServerState():
-	#create some kind of server client
-	#CreatedroneClient()
-	#else return State.waitForWifi
+	# For now I am just gunna see if I can ping the server
+	result = subprocess.call(['sudo ping -c 1 -q ' + serverName], shell=True, stderr=subprocess.STDOUT)
+	if(result != 0):
+		print "The server at " + serverName + " is not responding to ping requests."
+		print "Assuming that the server is down"
+
+		# Set flag so we know not to try and publish coordinates
+		# We will need to periodically try tp ping and restore connectivity
+		State.noServerConnection = True
+		return State.everyoneReady
 
 	return State.everyoneReady
 
-class Client:
-	def publishCoords(self, coords):
-		lat,lon = coords
-		print "lat = " + str(lat)
-		print "lon = " + str(lon)
 
 
-client = Client()
+client = gpsClient.Client(socket.gethostbyname(serverName), 5000)
 
 currentState = State.initDevices
 
@@ -107,7 +114,7 @@ while(True):
 		print "waiting for server"
 		currentState = waitForServerState()
 
-	# Publish coordinates loop
+	# Main loop
 	while( currentState == State.everyoneReady ): 
 		try:
 			print "Getting gps coords"
@@ -119,7 +126,8 @@ while(True):
 		
 		#try:
 		print "Publishing coordinates"
-		client.publishCoords( coords )
+		if client.publishCoords( coords ):
+			print "success!"
 		# except Exception,e:
 		# 	print "Publishing coords failed"
 		# 	print str(e)
