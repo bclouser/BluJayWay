@@ -22,6 +22,8 @@ class State:
 	waitForWifi = 3
 	waitForServer = 4
 	everyoneReady = 5
+	# flag 
+	serverConnection = False
 
 
 # Init State, wait for devices to become ready
@@ -54,11 +56,6 @@ def initDevicesState():
 def waitForLocationState():
 	timeoutCntr = 0
 	while(not gpsHandler.hasLocationFix()):
-		try:
-			gpsHandler.getFix()
-		except:
-			return State.initDevices
-
 		time.sleep(waitSeconds)
 		if(timeoutCntr*waitSeconds >= maxSecondsTillReady):
 			return State.initDevices
@@ -85,9 +82,10 @@ def waitForServerState():
 
 		# Set flag so we know not to try and publish coordinates
 		# We will need to periodically try tp ping and restore connectivity
-		State.noServerConnection = True
+		State.serverConnection = False
 		return State.everyoneReady
 
+	State.serverConnection = True
 	return State.everyoneReady
 
 
@@ -125,9 +123,12 @@ while(True):
 			currentState=State.waitForLocation
 		
 		#try:
-		print "Publishing coordinates"
-		if client.publishCoords( coords ):
-			print "success!"
+		if( State.serverConnection ):
+			print "Publishing coordinates"
+			if client.publishCoords( coords ):
+				print "success!"
+		else:
+			print "Running in server less mode. Not publishing coords"
 		# except Exception,e:
 		# 	print "Publishing coords failed"
 		# 	print str(e)

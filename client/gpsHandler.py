@@ -1,12 +1,51 @@
 import subprocess
 import time
 import gps
+import threading
 
 lat = 0
 lon = 0
 # Declaring some globals... i really should make this a legit python module
-gpsdConnection = None
+gpsdThread = None
 hasFix = False
+
+
+# We need to run a thread to get around the blocking call
+class GpsPoller(threading.Thread):
+	def __init__(self):
+		threading.Thread.__init__(self)
+		self.session = gps.gps("localhost", "2947")
+		self.session.stream(gps.WATCH_ENABLE)
+		self.latestReport = None
+		self.gpsdReady = False
+
+	def getLatestReport(self):
+		return self.latestReport
+
+	def run(self):
+		global hasFix
+		try:
+			while True:
+				report = self.session.next()
+				#print report
+
+				if report["class"]:
+					self.gpsdReady = True
+
+				# JTPV has the goods!
+				if report['class'] == "TPV" :
+					self.latestReport = report
+					hasFix = True
+
+				time.sleep(0.2)
+
+		except KeyError:
+			pass
+		except StopIteration:
+			pass
+		except Exception, e:
+			print "Caught exception within thread"
+			print str(e)
 
 def init():
 	print "Initializing gps"
@@ -27,85 +66,26 @@ def init():
 		print "Caught error in gpsHandler init():"
 		print str(e)
 		print result
-		return
+		return False
 
-	# Listen on port 2947 (gpsd) of localhost
+	# Kick off thread to Listen on port 2947 (gpsd) of localhost
+	global gpsdThread
 	try:
-		global gpsdConnection
-		gpsdConnection = gps.gps("localhost", "2947")
-		gpsdConnection.stream(gps.WATCH_ENABLE | gps.WATCH_NEWSTYLE)
-
-	except StopIteration:
-		gpsdConnection = None
-		print "GPSD has terminated"
+		gpsdThread = GpsPoller()
+		gpsdThread.daemon = True
+		gpsdThread.start()
+	except Exception, e:
+		print "Caught exception while launching gps thread"
+		print str(e)
 
 
 def deviceReady():
 	print "entering deviceReady()"
-	global gpsdConnection;
-	try:
-		report = gpsdConnection.next()
-		print "report:"
-		print report
-		# Just check that we are getting a response from our gpsd connection
-		if report['class'] == 'VERSION':
-			return True
+	global gpsdThread;
 
-		# I don't know what this is
-		elif report['class'] == 'DEVICE':
-			# Clean up our current connection.
-			gpsdConnection.close()
-			# Tell gpsd we're ready to receive messages.
-			gpsdConnection = gps.gps(mode=WATCH_ENABLE)
+	print "leaving device Ready " + str(gpsdThread. gpsdReady)
+	return gpsdThread.gpsdReady
 
-		else:
-			print "LEaving deviceReady()"
-			return False
-
-	except StopIteration:
-		gpsdConnection = None
-		print "GPSD has terminated"
-		return False
-
-	except Exception, e:
-		print str(e)
-		print "LEaving deviceReady()"
-		return False
-
-
-def getFix():
-	print "Gettin my fix! -gps device"
-	global lat
-	global lon
-	global gpsdConnection
-	global hasFix
-	try:
-		# This locks up if we don't get a fix after 3 tries
-		report = gpsdConnection.next()
-		print "report:"
-		print str(report)+"\n"
-
-		# Check that our response has gps coords and a valid fix
-		if report['lat'] and report['lon']:
-			lat = report['lat']
-			lon = report['lon']
-			hasFix = True
-			return True
-
-		return False
-
-	except StopIteration:
-		gpsdConnection = None
-		print "GPSD has terminated"
-		return False
-
-	except KeyError:
-		pass
-
-	except Exception, e:
-		print str(e)
-		print "LEaving deviceReady()"
-		return False
 
 def hasLocationFix():
 	global hasFix
@@ -114,23 +94,22 @@ def hasLocationFix():
 def getCoords():
 	global lat
 	global lon
-	global gpsdConnection
+	global gpsdThread
 
 	try:
-		# This locks up if we don't get a fix after 3 tries
-		# pretty sure the process is blocking on the socket waiting for new data.
-		# I should make that baby poll.
+		report = gpsdThread.getLatestReport()
 
-		lat = gpsdConnection.fix.latitude
-		lon = gpsdConnection.fix.longitude
+
+		print report
+
+		lat = report['lat']
+		lon = report['lon']
+		time = "" #str(gpsdConnection.utc) + " " + str(gpsdConnection.fix.time)
+		altitude = report['alt']
+		speed = report['speed']
 		hasFix = True
-		return (lat, lon)
+		return (lat, lon, time, altitude, speed)
 
-		return False
-
-	except StopIteration:
-		gpsdConnection = None
-		print "GPSD has terminated"
 		return False
 
 	except KeyError:

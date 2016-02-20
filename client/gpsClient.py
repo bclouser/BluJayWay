@@ -7,12 +7,10 @@ class Client:
 		self.tcpPort = tcpPort
 
 	def publishCoords(self, coords):
-		lat,lon = coords
-		print "lat = " + str(lat)
-		print "lon = " + str(lon)
+		lat,lon,time,altitude,speed = coords
 		bufSize = 1024
 
-		message = "{\"coords\":{\"lat\":"+str(lat)+", \"lng\":"+str(lon)+"}}"
+		message = "{\"coords\":{\"lat\":"+str(lat)+", \"lng\":"+str(lon)+", \"time\":\""+str(time)+"\", \"altitude\":"+str(altitude)+",\"speed\":"+str(speed)+"}}"
 		print message;
 		try:
 			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
