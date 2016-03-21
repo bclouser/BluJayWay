@@ -6,7 +6,7 @@ var SocketHandler = function(){
 	var urlSplit = url.split('/');
 	//    http://testpit.benclouser.com/blah/blah/blah
 	this.socket = io.connect(urlSplit[0]+'//'+urlSplit[2]);
-	this.coords = {lat:0.0, lng:0.0};
+	this.clientCoords = [];
 	var self = this;
 
 	this.socket.on('coords', function(data) {
@@ -63,10 +63,13 @@ function initMap(){
 	marker.setMap( map );
 
 	var socketHandler = new SocketHandler();
-	socketHandler.onNewCoords( function(coords){
-		console.log("Move marker");
-		var latLng = new google.maps.LatLng( coords.lat, coords.lng );
-		marker.setPosition( latLng );
-		map.panTo( latLng );
+	socketHandler.onNewCoords( function(clientCoords){
+		clientCoords.forEach(function(client){
+			console.log("Move marker for host " + client.host);
+			var latLng = new google.maps.LatLng( client.lat, client.lng );
+			marker.setPosition( latLng );
+			//map.panTo( latLng );
+		});
+		
 	});
 }

@@ -7,6 +7,11 @@ var bodyParser = require('body-parser');
 var socketIo = require('socket.io');
 var net = require('net');
 
+// Database
+var mongo = require('mongodb');
+var monk = require('monk');
+var db = monk('localhost:27017/nodetest2');
+
 var app = express();
 
 // Socket.io
@@ -22,6 +27,7 @@ tcpServer.init(net, app.io);
 
 
 var routes = require('./routes/index')(app.io, tcpServer);
+var apiRoutes = require('./routes/api');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -38,7 +44,15 @@ app.use(express.static(path.join(__dirname, 'node_modules/socket.io-client')));
 app.use(express.static(path.join(__dirname, 'node_modules/socket.io')));
 app.use(express.static(path.join(__dirname, 'test')));
 
+
+// Make our db accessible to our router
+app.use(function(req,res,next){
+    req.db = db;
+    next();
+});
+
 app.use('/', routes);
+app.use('/api', apiRoutes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

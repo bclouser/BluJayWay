@@ -9,6 +9,8 @@ module.exports = function(io, tcpServer) {
       res.render('index', { googleMapsApiKey: secrets.getGoogleMapsApiKey() });
     });
 
+    // Handle connection from new web client
+    // This is likely a browser window
     io.on('connection', function(socket) { 
         console.log("Got connection");
 
