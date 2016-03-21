@@ -33,7 +33,33 @@ function initMap(){
 		center: {lat: 38.954, lng: -77.346},
 		zoom: 15
 	});
-	marker = new google.maps.Marker( {position: map.center, map: map} );
+	var contentString = '<div id="content">'+
+	      '<div id="siteNotice">'+
+	      '</div>'+
+	      '<h1 id="firstHeading" class="firstHeading">Hawk</h1>'+
+	      '<div id="bodyContent">'+
+	      '<ul>'+
+	      '<li> 0 N, 0 W </li>' +
+	      '<li> Alt: 450\' </li>' +
+	      '<li> Speed: 14 Mph </li>' +
+	      '</ul>'+
+	      '</div>'+
+	      '</div>';
+
+	var infowindow = new google.maps.InfoWindow({
+		content: contentString
+	});
+
+	marker = new google.maps.Marker({
+		position: map.center,
+		map: map,
+		title: 'Hawk'
+	});
+
+	marker.addListener('click', function() {
+		infowindow.open(map, marker);
+	});
+	
 	marker.setMap( map );
 
 	var socketHandler = new SocketHandler();
