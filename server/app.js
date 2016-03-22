@@ -10,7 +10,7 @@ var net = require('net');
 // Database
 var mongo = require('mongodb');
 var monk = require('monk');
-var db = monk('localhost:27017/nodetest2');
+var db = monk('localhost:27017/blueJay');
 
 var app = express();
 
