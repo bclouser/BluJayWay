@@ -33,41 +33,56 @@ function initMap(){
 		center: {lat: 38.954, lng: -77.346},
 		zoom: 15
 	});
-	var contentString = '<div id="content">'+
-	      '<div id="siteNotice">'+
-	      '</div>'+
-	      '<h1 id="firstHeading" class="firstHeading">Hawk</h1>'+
-	      '<div id="bodyContent">'+
-	      '<ul>'+
-	      '<li> 0 N, 0 W </li>' +
-	      '<li> Alt: 450\' </li>' +
-	      '<li> Speed: 14 Mph </li>' +
-	      '</ul>'+
-	      '</div>'+
-	      '</div>';
 
-	var infowindow = new google.maps.InfoWindow({
-		content: contentString
-	});
-
-	marker = new google.maps.Marker({
-		position: map.center,
-		map: map,
-		title: 'Hawk'
-	});
-
-	marker.addListener('click', function() {
-		infowindow.open(map, marker);
-	});
-	
-	marker.setMap( map );
-
+	// an object to hold all markers 
+	var markers = {};
 	var socketHandler = new SocketHandler();
 	socketHandler.onNewCoords( function(clientCoords){
 		clientCoords.forEach(function(client){
 			console.log("Move marker for host " + client.host);
 			var latLng = new google.maps.LatLng( client.lat, client.lng );
-			marker.setPosition( latLng );
+
+			var contentString = '<div id="content">'+
+			      '<div id="siteNotice">'+
+			      '</div>'+
+			      '<h1 id="firstHeading" class="firstHeading">'+client.host+'</h1>'+
+			      '<div id="bodyContent">'+
+			      '<ul>'+
+			      '<li> '+client.lat+', '+client.lng+' </li>' +
+			      '<li> Alt: '+client.alt+'\' </li>' +
+			      '<li> Speed: '+client.speed+' Mph </li>' +
+			      '</ul>'+
+			      '</div>'+
+			      '</div>';
+
+			
+			// See if it exists within our container of markers
+			if(markers[client.host]){
+				console.log(client.host + " Exists already");
+				markers[client.host].setPosition(latLng);
+				//markers[client.host].infowindow.setContent(contentString);
+			}
+			// OK, it doesn't exist yet, create a new marker
+			else{
+				console.log(client.host + " doesnt exist yet, creating it");
+				marker = new google.maps.Marker({
+												position: map.center,
+												map: map,
+												title: client.host
+											});
+
+				marker.setMap( map );
+				marker.infowindow = new google.maps.InfoWindow({
+					content: contentString
+				});
+
+				marker.addListener('click', function() {
+					marker.infowindow.open(map, marker);
+				});
+
+				markers[client.host] = marker;
+			}
+			
 			//map.panTo( latLng );
 		});
 		
