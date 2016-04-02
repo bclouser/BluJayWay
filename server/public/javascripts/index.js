@@ -1,4 +1,38 @@
 
+var currentlyTracking = false;
+
+$(function() {
+	// When a user modifies the drone display menu, we need to tell the server
+	// the specifics of the message we want. THIS SHOULD BE CLIENT SPECIFIC!
+	$('#BensFakeHost').click(function(){
+		if(currentlyTracking){
+			console.log("Turning tracking off");
+			// Send a post request to the server telling it that we no longer want data for this guy
+			$.post( "ajax/test.html", function( data ) {
+				$( ".result" ).html( data );
+			});
+
+			// Turn off it's current polyline
+
+			// Set 
+			currentlyTracking = false;
+		}
+		else{
+			console.log("Turning tracking on");
+
+			// Send a post request to the server telling we would like to start receiving history
+			$.post( "ajax/test.html", function( data ) {
+				$( ".result" ).html( data );
+				// Server will respond immediately with history, we need to draw the polyline on the map
+			});
+
+			// Set 
+			currentlyTracking = true;
+		}
+	});
+});
+
+
 var SocketHandler = function(){
 	console.log(window.location.href);
 	// Figure out our server location based on url... kind of clunky
@@ -60,7 +94,7 @@ function initMap(){
 			if(markers[client.host]){
 				console.log(client.host + " Exists already");
 				markers[client.host].setPosition(latLng);
-				//markers[client.host].infowindow.setContent(contentString);
+				markers[client.host].infowindow.setContent(contentString);
 			}
 			// OK, it doesn't exist yet, create a new marker
 			else{
@@ -76,11 +110,22 @@ function initMap(){
 					content: contentString
 				});
 
-				marker.addListener('click', function() {
-					marker.infowindow.open(map, marker);
-				});
+				google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
+				    return function() {
+				        infowindow.setContent(content);
+				        infowindow.open(map,marker);
+				    };
+				})(marker,contentString,marker.infowindow)); 
 
 				markers[client.host] = marker;
+			}
+
+			// check if history is turned on for this host, how many history points? Limit by time maybe?
+			if(true){
+				// We also might want to have a button that only displays active drones. Just a thought
+				//if(client.active){
+
+
 			}
 			
 			//map.panTo( latLng );
