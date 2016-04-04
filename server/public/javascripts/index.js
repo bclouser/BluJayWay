@@ -8,11 +8,14 @@ $(function() {
 		if(currentlyTracking){
 			console.log("Turning tracking off");
 			// Send a post request to the server telling it that we no longer want data for this guy
-			$.post( "ajax/test.html", function( data ) {
-				$( ".result" ).html( data );
-			});
+			$.post( "api/client/set/historyReporting", {"clientName":"BensFakeHost"}, 
+							function( data ) {
+								console.log("Got data back");
+								console.log(data);
+							});
 
 			// Turn off it's current polyline
+
 
 			// Set 
 			currentlyTracking = false;
@@ -21,9 +24,11 @@ $(function() {
 			console.log("Turning tracking on");
 
 			// Send a post request to the server telling we would like to start receiving history
-			$.post( "ajax/test.html", function( data ) {
-				$( ".result" ).html( data );
-				// Server will respond immediately with history, we need to draw the polyline on the map
+			$.post( "api/client/set/historyReporting", {"clientName":"BensFakeHost"}, 
+							function( data ) {
+								console.log("Got data back");
+								console.log(data);
+								// Server will respond immediately with history, we need to draw the polyline on the map
 			});
 
 			// Set 
