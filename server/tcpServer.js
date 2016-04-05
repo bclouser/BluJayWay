@@ -50,11 +50,6 @@ module.exports.init = function(net, io)
                                         console.log(err);
                                     }
                                 });
-
-                // Yeah, we need to start specifying which gps client these coords belong.
-                // We should send this out on a constant period. Not everytime someone updates coords
-                //console.log("Sending coords to all web clients");
-                //io.sockets.emit('coords', latestCoords);
                 socket.end();
             }
         });

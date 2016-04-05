@@ -1,6 +1,9 @@
 
 var currentlyTracking = false;
 
+var historyPathLine;
+var map;
+
 $(function() {
 	// When a user modifies the drone display menu, we need to tell the server
 	// the specifics of the message we want. THIS SHOULD BE CLIENT SPECIFIC!
@@ -15,6 +18,8 @@ $(function() {
 							});
 
 			// Turn off it's current polyline
+
+			historyPathLine.setMap(null);
 
 
 			// Set 
@@ -66,7 +71,6 @@ SocketHandler.prototype.onNewCoords = function(handler){
 	}
 }
 
-var map;
 function initMap(){
 	map = new google.maps.Map(document.getElementById('map'), {
 		center: {lat: 38.954, lng: -77.346},
@@ -100,6 +104,21 @@ function initMap(){
 				console.log(client.host + " Exists already");
 				markers[client.host].setPosition(latLng);
 				markers[client.host].infowindow.setContent(contentString);
+			
+				if(currentlyTracking && client.config && client.config.keepHistory){
+					historyPathLine = new google.maps.Polyline({
+						path: client.history,
+						geodesic: true,
+						strokeColor: '#FF0000',
+						strokeOpacity: 1.0,
+						strokeWeight: 2
+					});
+
+					console.log("Setting polyline");
+					historyPathLine.setMap(map);
+
+					delete historyPathLine;
+				}
 			}
 			// OK, it doesn't exist yet, create a new marker
 			else{

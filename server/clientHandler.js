@@ -8,8 +8,6 @@ var globalUpdateInterval = null;
 var viewingClients = [];
 
 module.exports = {
-	state: state,
-
 
 	addClient: function(socket){
 
@@ -25,6 +23,17 @@ module.exports = {
 	removeClient: function(socket){
 		viewingClients.splice(viewingClients.indexOf(socket), 1);
 		this.disableTimer();
+	},
+
+	updateState: function(name, config){
+		var index = -1;
+		for(var i = 0; i<latestCoords.length; ++i){
+		    if(latestCoords[i].host == name){
+		        index = i;
+		        break;
+		    }
+		}
+		latestCoords[i].config = config;
 	},
 
 	publishCoords: function(webSocket){
@@ -47,7 +56,6 @@ module.exports = {
 	},
 
 	timerCallbackFunction: function(){
-		console.log("In callback. Sending coords.");
 		for(var i = 0; i<viewingClients.length; ++i){
 			viewingClients[i].emit('coords', latestCoords);
 		}
@@ -57,14 +65,31 @@ module.exports = {
 		// Do we already exist in this array?
 		var index = -1;
 		for(var i = 0; i<latestCoords.length; ++i){
-		    if(latestCoords[i].host == message.host){
+		    if(latestCoords[i].host == coordObject.host){
 		        index = i;
 		        break;
 		    }
 		}
 
 		if(index !== -1){
-		    latestCoords[index] = coordObject;
+			// Are we trying to save this guy's breadcrumbs
+			if( latestCoords[index].config ){
+				// copy these first
+				latestCoords[index].lat = coordObject.lat;
+				latestCoords[index].lng = coordObject.lng;
+				latestCoords[index].alt = coordObject.alt;
+				// I don't care about the host parameter
+				delete coordObject.host;
+				// add this current coordinate to the history of coords
+				if(!latestCoords[index].history){
+					latestCoords[index].history = [];
+				}
+				latestCoords[index].history.push(coordObject);
+			}
+			else{
+				// if we aren't concerned with keeping the history, just overwrite object
+			    latestCoords[index] = coordObject;
+			}
 		}
 		else{
 		    // first time here!

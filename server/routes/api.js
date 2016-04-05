@@ -94,13 +94,13 @@ router.post('/client/set/historyReporting', jsonParser, function(req, res) {
 		console.log("Got valid request to set the historyReporting");
 
 		// Update global object so everyone else knows to send history updates for this client
-		var newData = {
-			history:true,
+		var config = {
+			keepHistory:true,
 			startRange:startRange,
 			endRange:endRange
 		}
 
-		clientHandler.state[clientName] = newData;
+		clientHandler.updateState(clientName, config);
 
 		// Send response with history for requested client.
 		var promise = getHistoryPromise(req.db, clientName, startRange, endRange);
