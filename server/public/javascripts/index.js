@@ -1,10 +1,13 @@
 
 var currentlyTracking = false;
-
-var historyPathLine;
 var map;
+// an object to hold all markers 
+var markers = {};
 
 $(function() {
+	$('#simple-menu').sidr({
+		side: 'right'
+	});
 	// When a user modifies the drone display menu, we need to tell the server
 	// the specifics of the message we want. THIS SHOULD BE CLIENT SPECIFIC!
 	$('#BensFakeHost').click(function(){
@@ -19,7 +22,7 @@ $(function() {
 
 			// Turn off it's current polyline
 
-			historyPathLine.setMap(null);
+			markers['BensFakeHost'].historyPathLine.setMap(null);
 
 
 			// Set 
@@ -77,8 +80,6 @@ function initMap(){
 		zoom: 15
 	});
 
-	// an object to hold all markers 
-	var markers = {};
 	var socketHandler = new SocketHandler();
 	socketHandler.onNewCoords( function(clientCoords){
 		clientCoords.forEach(function(client){
@@ -106,18 +107,11 @@ function initMap(){
 				markers[client.host].infowindow.setContent(contentString);
 			
 				if(currentlyTracking && client.config && client.config.keepHistory){
-					historyPathLine = new google.maps.Polyline({
-						path: client.history,
-						geodesic: true,
-						strokeColor: '#FF0000',
-						strokeOpacity: 1.0,
-						strokeWeight: 2
-					});
-
 					console.log("Setting polyline");
-					historyPathLine.setMap(map);
-
-					delete historyPathLine;
+					var latLng = new google.maps.LatLng( client.lat, client.lng );
+					var path = marker.historyPathLine.getPath();
+					path.push(latLng);
+					marker.historyPathLine.setMap(map);
 				}
 			}
 			// OK, it doesn't exist yet, create a new marker
@@ -132,6 +126,13 @@ function initMap(){
 				marker.setMap( map );
 				marker.infowindow = new google.maps.InfoWindow({
 					content: contentString
+				});
+
+				// Add that polyline piece
+				marker.historyPathLine = new google.maps.Polyline({
+					strokeColor: '#FF0000',
+					strokeOpacity: 1.0,
+					strokeWeight: 2
 				});
 
 				google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
