@@ -31,7 +31,12 @@ module.exports.init = function(net, io)
                     alt = message.alt;
                 }
 
-                var coordObject = {host: message.host, lat:message.lat, lng:message.lng, alt:message.alt};
+                var speed = -1;
+                if(message.speed != null){
+                    speed = message.speed;
+                }
+
+                var coordObject = {host: message.host, lat:message.lat, lng:message.lng, alt:alt, speed:speed};
 
                 clientHandler.addCoords(coordObject);
 

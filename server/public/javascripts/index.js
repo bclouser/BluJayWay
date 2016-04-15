@@ -1,8 +1,9 @@
 
-var currentlyTracking = false;
 var map;
 // an object to hold all markers 
 var markers = {};
+
+var pannedMapYet = false;
 
 // Make things pretty
 var colorsList = [
@@ -20,6 +21,20 @@ var colorsList = [
 	'E6AC27',
 	'BF4D28'
 ]
+
+// the smooth zoom function
+function smoothZoom (map, max, cnt) {
+    if (cnt >= max) {
+            return;
+        }
+    else {
+        z = google.maps.event.addListener(map, 'zoom_changed', function(event){
+            google.maps.event.removeListener(z);
+            smoothZoom(map, max, cnt + 1);
+        });
+        setTimeout(function(){map.setZoom(cnt)}, 80); // 80ms is what I found to work well on my system -- it might not work well on all systems
+    }
+}  
 
 $(function() {
 	$('#simple-menu').sidr({
@@ -137,8 +152,8 @@ SocketHandler.prototype.onNewCoords = function(handler){
 
 function initMap(){
 	map = new google.maps.Map(document.getElementById('map'), {
-		center: {lat: 38.954, lng: -77.346},
-		zoom: 15
+		center: {lat: 0, lng: 0},
+		zoom: 1 // zoom as far out as possible
 	});
 
 	var socketHandler = new SocketHandler();
@@ -165,24 +180,26 @@ function initMap(){
 				console.log(client.host + " Exists already");
 				markers[client.host].setPosition(latLng);
 				markers[client.host].infowindow.setContent(contentString);
-			
+				var path = marker.historyPathLine.getPath();
 				if(client.config && client.config.keepHistory){
 					console.log("Setting polyline");
 					var latLng = new google.maps.LatLng( client.lat, client.lng );
-					var path = marker.historyPathLine.getPath();
 					path.push(latLng);
 					marker.historyPathLine.setMap(map);
 				}
 				else{
 					// Turn off it's current polyline
 					marker.historyPathLine.setMap(null);
+					// clear the array
+					//marker.historyPathLine.setPath([]);
+					while(path.getLength() > 0) path.pop(); 
 				}
 			}
 			// OK, it doesn't exist yet, create a new marker
 			else{
 				console.log(client.host + " doesnt exist yet, creating it");
 				marker = new google.maps.Marker({
-												position: map.center,
+												position: latLng,
 												map: map,
 												title: client.host
 											});
@@ -224,7 +241,20 @@ function initMap(){
 				markers[client.host] = marker;
 			}
 			
-			//map.panTo( latLng );
+			// Only do this once for the first gps coord we get from a client. after that, leave it alone
+			if(!pannedMapYet){
+				map.panTo( latLng );
+				//map.setZoom(12);
+				smoothZoom(map, 12, map.getZoom());
+				pannedMapYet = true;
+			}
+
+			if(client.config){
+				// be sure to keep our checkbox up to date
+				console.log(client.host + " checked: " + client.config.keepHistory);
+				$("#menu-container ul li input[name=\""+client.host+"\"]").prop('checked', client.config.keepHistory);
+			}
+
 		});
 		
 	});

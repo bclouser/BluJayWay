@@ -53,7 +53,7 @@ module.exports = {
 	enableTimer: function(){
 		console.log("Enabling the timeout");
 		if(!globalUpdateInterval){
-			globalUpdateInterval = setInterval(this.timerCallbackFunction, 3000);
+			globalUpdateInterval = setInterval(this.timerCallbackFunction, 2000);
 		}
 		// else timer already set, do nothing
 	},

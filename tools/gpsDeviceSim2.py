@@ -13,7 +13,7 @@ lng = -77.356357;
 
 
 while(True):
-	MESSAGE = "{\"host\":\"BensFakeHost\", \"lat\":"+str(lat)+", \"lng\":"+str(lng)+", \"alt\":"+str(45)+"}"
+	MESSAGE = "{\"host\":\""+socket.gethostname()+"\", \"lat\":"+str(lat)+", \"lng\":"+str(lng)+", \"alt\":"+str(45)+"}"
 	print MESSAGE;
 	try:
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
