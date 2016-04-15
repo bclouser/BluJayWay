@@ -11,9 +11,22 @@ BUFFER_SIZE = 1024
 lat = 38.920000;
 lng = -77.356357;
 
+currentSpeed = 11
+currentAlt = 41
 
 while(True):
-	MESSAGE = "{\"host\":\""+socket.gethostname()+"\", \"lat\":"+str(lat)+", \"lng\":"+str(lng)+", \"alt\":"+str(45)+"}"
+	if currentSpeed % 5:
+		currentSpeed += 1
+	else:
+		currentSpeed -= 4
+
+	if currentAlt % 5:
+		currentAlt += 1
+	else:
+		currentAlt -= 4
+
+
+	MESSAGE = "{\"host\":\"BensFakeHost\", \"lat\":"+str(lat)+", \"lng\":"+str(lng)+", \"alt\":"+str(currentAlt)+",\"speed\":"+str(currentSpeed)+"}"
 	print MESSAGE;
 	try:
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
