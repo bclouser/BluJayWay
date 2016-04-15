@@ -20,9 +20,37 @@ html, body {
 	z-index: 99;
 }
 
+#sidr ul li{
+	border:none;
+	line-height: 46px;
+}
 
-#menu-container .menu-item {
-	margin-left: 5em;
+#sidr ul li:hover{
+	border:none;
+	margin-bottom:none;
+	padding-bottom: none;
+}
+
+
+#menu-container .menu-item .download {
+	cursor: pointer; 
+	/*margin-left: 5em;*/
+}
+
+#menu-container .menu-item h3 {
+	font-size:100%;
+	text-align: center;
+	/*margin-left: 5em;*/
+}
+
+
+#menu-container .menu-item .history-checkbx
+{
+	margin-left: 1em;
+}
+
+#menu-container .menu-item .download {
+	display: inline-block;
 }
 
 

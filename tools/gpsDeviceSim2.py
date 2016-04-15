@@ -9,7 +9,7 @@ TCP_PORT = 5000
 BUFFER_SIZE = 1024
 
 lat = 38.920000;
-lng = -77.346357;
+lng = -77.356357;
 
 
 while(True):

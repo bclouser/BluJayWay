@@ -4,44 +4,105 @@ var map;
 // an object to hold all markers 
 var markers = {};
 
+// Make things pretty
+var colorsList = [
+	// http://www.colourlovers.com/palette/1930/cheer_up_emo_kid
+	'556270',
+	'4ECDC4',
+	'C7F464',
+	'FF6B6B',
+	'C44D58',
+
+	// http://www.colourlovers.com/palette/953498/Headache
+	'655643',
+	'80BCA3',
+	'F6F7BD',
+	'E6AC27',
+	'BF4D28'
+]
+
 $(function() {
 	$('#simple-menu').sidr({
 		side: 'right'
 	});
-	// When a user modifies the drone display menu, we need to tell the server
-	// the specifics of the message we want. THIS SHOULD BE CLIENT SPECIFIC!
-	$('#BensFakeHost').click(function(){
-		if(currentlyTracking){
-			console.log("Turning tracking off");
-			// Send a post request to the server telling it that we no longer want data for this guy
-			$.post( "api/client/set/historyReporting", {"clientName":"BensFakeHost"}, 
-							function( data ) {
-								console.log("Got data back");
-								console.log(data);
-							});
 
-			// Turn off it's current polyline
+	console.log("Sending request");
+	$.ajax({
+	    url: 'api/client/list',
+	    type: 'GET',
+	    success: function(data){ 
+			var menuList = $('#menu-container ul');
+			for(var i = 0; i<data.length; ++i){
 
-			markers['BensFakeHost'].historyPathLine.setMap(null);
+				var menuItem ='<li><div class="menu-item">\
+    							<h3 class="hostname">'+data[i]+'</h3>\
+    							<label class="history-checkbx"><input type="checkbox" name="'+data[i]+'"> Display Path</label>\
+    							<a class="download" name="'+data[i]+'"><span class="glyphicon glyphicon-save" aria-hidden="true"> (.KML)</span></a>\
+  								</div></li>';
+
+				menuList.append(menuItem);
+			}
+			$('#menu-container ul li').each(function(each){
+				$(this).css(':hover {cursor:pointer}');
 
 
-			// Set 
-			currentlyTracking = false;
-		}
-		else{
-			console.log("Turning tracking on");
+				// When a user modifies the drone display menu, we need to tell the server
+				// the specifics of the message we want. THIS SHOULD BE CLIENT SPECIFIC!
+				$(this).find('.history-checkbx input').click(function(){
+					var clientName = this.name;
+					if( $(this).is(':checked') ){
+						console.log("Turning on history tracking for " + clientName);
+						// Send a post request to the server telling we would like to start receiving history
+						$.post( "api/client/set/historyReporting", {"clientName":clientName}, 
+										function( data ) {
+											console.log("Got data back");
+											console.log(data);
+											// Server will respond immediately with history, we need to draw the polyline on the map
+						});
+					}
+					else{
+						console.log("Turning OFF history tracking for " + clientName);
+						// Send a post request to the server telling it that we no longer want data for this guy
+						$.post( "api/client/set/historyReporting", {"clientName":clientName}, 
+										function( data ) {
+											console.log("Got data back");
+											console.log(data);
+										}
+						);
 
-			// Send a post request to the server telling we would like to start receiving history
-			$.post( "api/client/set/historyReporting", {"clientName":"BensFakeHost"}, 
-							function( data ) {
-								console.log("Got data back");
-								console.log(data);
-								// Server will respond immediately with history, we need to draw the polyline on the map
+						// Turn off it's current polyline
+						markers[clientName].historyPathLine.setMap(null);
+					}
+				});
 			});
 
-			// Set 
-			currentlyTracking = true;
-		}
+			$('#menu-container .menu-item .download').click(function(){
+				var clientName = this.name;
+				console.log("Clicked on download kml file for " + clientName);
+				var url = 'api/client/kmlcoords/'+clientName;
+				var params = {};
+				$.ajax({
+				    type: "GET",
+				    url:  url,
+				    data: params,
+				    success: function(response, status, request) {
+				        var disp = request.getResponseHeader('Content-Disposition');
+				        if (disp && disp.search('attachment') != -1) {
+				            var form = $('<form method="GET" action="'+url+'">');
+				            $.each(params, function(k, v) {
+				                form.append($('<input type="hidden" name="' + k +
+				                        '" value="' + v + '">'));
+				            });
+				            $('body').append(form);
+				            form.submit();
+				        }
+				    }
+				});
+			});
+	    },
+	    error: function(data) {
+	    	console.log("Getting list of clients in db failed");
+	    }
 	});
 });
 
@@ -83,13 +144,12 @@ function initMap(){
 	var socketHandler = new SocketHandler();
 	socketHandler.onNewCoords( function(clientCoords){
 		clientCoords.forEach(function(client){
-			console.log("Move marker for host " + client.host);
 			var latLng = new google.maps.LatLng( client.lat, client.lng );
 
 			var contentString = '<div id="content">'+
 			      '<div id="siteNotice">'+
 			      '</div>'+
-			      '<h1 id="firstHeading" class="firstHeading">'+client.host+'</h1>'+
+			      '<h3 id="firstHeading" class="firstHeading">'+client.host+'</h3>'+
 			      '<div id="bodyContent">'+
 			      '<ul>'+
 			      '<li> '+client.lat+', '+client.lng+' </li>' +
@@ -106,12 +166,16 @@ function initMap(){
 				markers[client.host].setPosition(latLng);
 				markers[client.host].infowindow.setContent(contentString);
 			
-				if(currentlyTracking && client.config && client.config.keepHistory){
+				if(client.config && client.config.keepHistory){
 					console.log("Setting polyline");
 					var latLng = new google.maps.LatLng( client.lat, client.lng );
 					var path = marker.historyPathLine.getPath();
 					path.push(latLng);
 					marker.historyPathLine.setMap(map);
+				}
+				else{
+					// Turn off it's current polyline
+					marker.historyPathLine.setMap(null);
 				}
 			}
 			// OK, it doesn't exist yet, create a new marker
@@ -135,22 +199,29 @@ function initMap(){
 					strokeWeight: 2
 				});
 
-				google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
+				// in case we want to have it stick with a click
+				// google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
+				//     return function() {
+				//         infowindow.setContent(content);
+				//         infowindow.open(map,marker);
+				//     };
+				// })(marker,contentString,marker.infowindow)); 
+
+
+				google.maps.event.addListener(marker,'mouseover', (function(marker,content,infowindow){ 
 				    return function() {
 				        infowindow.setContent(content);
 				        infowindow.open(map,marker);
 				    };
 				})(marker,contentString,marker.infowindow)); 
 
+				google.maps.event.addListener(marker,'mouseout', (function(marker,infowindow){ 
+				    return function() {
+				        infowindow.close();
+				    };
+				})(marker,marker.infowindow));
+
 				markers[client.host] = marker;
-			}
-
-			// check if history is turned on for this host, how many history points? Limit by time maybe?
-			if(true){
-				// We also might want to have a button that only displays active drones. Just a thought
-				//if(client.active){
-
-
 			}
 			
 			//map.panTo( latLng );

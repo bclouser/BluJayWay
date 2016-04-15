@@ -27,13 +27,22 @@ module.exports = {
 
 	updateState: function(name, config){
 		var index = -1;
+		// If we don't have any coords, we don't update anything
 		for(var i = 0; i<latestCoords.length; ++i){
 		    if(latestCoords[i].host == name){
 		        index = i;
 		        break;
 		    }
 		}
-		latestCoords[i].config = config;
+		if( index !== (-1) ){
+			latestCoords[i].config = config;		
+		}
+		else{
+			// doesn't exist yet, so add it.
+			latestCoords.push({'config':config});
+		}
+		console.log("Updated state: ");
+		console.log(latestCoords);
 	},
 
 	publishCoords: function(webSocket){
@@ -59,6 +68,20 @@ module.exports = {
 		for(var i = 0; i<viewingClients.length; ++i){
 			viewingClients[i].emit('coords', latestCoords);
 		}
+	},
+
+	currentlyTracking: function(clientName){
+		console.log("name = " + clientName);
+		for(var i = 0; i<latestCoords.length; ++i){
+		    if(latestCoords[i].host == clientName){
+		    	if(latestCoords[i].config){
+		    		console.log("Config object:");
+		    		console.log(latestCoords[i].config);
+		    		return latestCoords[i].config.keepHistory;
+		    	}
+		    }
+		}
+		return false;
 	},
 
 	addCoords: function(coordObject){
