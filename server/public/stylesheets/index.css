@@ -53,6 +53,9 @@ html, body {
 	display: inline-block;
 }
 
+#menu-container ul li:hover {
+	cursor: pointer;
+}
 
 
 

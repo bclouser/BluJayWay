@@ -5,21 +5,23 @@ var markers = {};
 
 var pannedMapYet = false;
 
+var colorIndex = 0;
+
 // Make things pretty
 var colorsList = [
 	// http://www.colourlovers.com/palette/1930/cheer_up_emo_kid
-	'556270',
-	'4ECDC4',
-	'C7F464',
-	'FF6B6B',
-	'C44D58',
+	'#556270',
+	'#4ECDC4',
+	'#C7F464',
+	'#FF6B6B',
+	'#C44D58',
 
 	// http://www.colourlovers.com/palette/953498/Headache
-	'655643',
-	'80BCA3',
-	'F6F7BD',
-	'E6AC27',
-	'BF4D28'
+	'#655643',
+	'#80BCA3',
+	'#F6F7BD',
+	'#E6AC27',
+	'#BF4D28'
 ]
 
 // the smooth zoom function
@@ -34,7 +36,74 @@ function smoothZoom (map, max, cnt) {
         });
         setTimeout(function(){map.setZoom(cnt)}, 80); // 80ms is what I found to work well on my system -- it might not work well on all systems
     }
-}  
+} 
+
+function gimmeMenuItemHtml(itemName, color){
+	var menuItem ='<li name="'+itemName+'", style="background-color:'+color+';"><div class="menu-item">\
+					<h3 class="hostname">'+itemName+'</h3>\
+					<label class="history-checkbx"><input type="checkbox" name="'+itemName+'"> Display Path</label>\
+					<a class="download" name="'+itemName+'"><span class="glyphicon glyphicon-save" aria-hidden="true"> (.KML)</span></a>\
+					</div></li>';
+	return menuItem;
+}
+
+function setMenuCallbacks(){
+	$('#menu-container ul li').each(function(each){
+
+		// When a user modifies the drone display menu, we need to tell the server
+		// the specifics of the message we want. THIS SHOULD BE CLIENT SPECIFIC!
+		$(this).find('.history-checkbx input').unbind().click(function(){
+			var clientName = this.name;
+			if( $(this).is(':checked') ){
+				console.log("Turning on history tracking for " + clientName);
+				// Send a post request to the server telling we would like to start receiving history
+				$.post( "api/client/set/historyReporting", {"clientName":clientName}, 
+								function( data ) {
+									console.log("Got data back");
+									console.log(data);
+									// Server will respond immediately with history, we need to draw the polyline on the map
+				});
+			}
+			else{
+				console.log("Turning OFF history tracking for " + clientName);
+				// Send a post request to the server telling it that we no longer want data for this guy
+				$.post( "api/client/set/historyReporting", {"clientName":clientName}, 
+								function( data ) {
+									console.log("Got data back");
+									console.log(data);
+								}
+				);
+
+				// Turn off it's current polyline
+				markers[clientName].historyPathLine.setMap(null);
+			}
+		});
+	});
+
+	$('#menu-container .menu-item .download').unbind().click(function(){
+		var clientName = this.name;
+		console.log("Clicked on download kml file for " + clientName);
+		var url = 'api/client/kmlcoords/'+clientName;
+		var params = {};
+		$.ajax({
+		    type: "GET",
+		    url:  url,
+		    data: params,
+		    success: function(response, status, request) {
+		        var disp = request.getResponseHeader('Content-Disposition');
+		        if (disp && disp.search('attachment') != -1) {
+		            var form = $('<form method="GET" action="'+url+'">');
+		            $.each(params, function(k, v) {
+		                form.append($('<input type="hidden" name="' + k +
+		                        '" value="' + v + '">'));
+		            });
+		            $('body').append(form);
+		            form.submit();
+		        }
+		    }
+		});
+	});
+}
 
 $(function() {
 	$('#simple-menu').sidr({
@@ -46,74 +115,12 @@ $(function() {
 	    url: 'api/client/list',
 	    type: 'GET',
 	    success: function(data){ 
-			var menuList = $('#menu-container ul');
-			for(var i = 0; i<data.length; ++i){
-
-				var menuItem ='<li><div class="menu-item">\
-    							<h3 class="hostname">'+data[i]+'</h3>\
-    							<label class="history-checkbx"><input type="checkbox" name="'+data[i]+'"> Display Path</label>\
-    							<a class="download" name="'+data[i]+'"><span class="glyphicon glyphicon-save" aria-hidden="true"> (.KML)</span></a>\
-  								</div></li>';
-
-				menuList.append(menuItem);
-			}
-			$('#menu-container ul li').each(function(each){
-				$(this).css(':hover {cursor:pointer}');
-
-
-				// When a user modifies the drone display menu, we need to tell the server
-				// the specifics of the message we want. THIS SHOULD BE CLIENT SPECIFIC!
-				$(this).find('.history-checkbx input').click(function(){
-					var clientName = this.name;
-					if( $(this).is(':checked') ){
-						console.log("Turning on history tracking for " + clientName);
-						// Send a post request to the server telling we would like to start receiving history
-						$.post( "api/client/set/historyReporting", {"clientName":clientName}, 
-										function( data ) {
-											console.log("Got data back");
-											console.log(data);
-											// Server will respond immediately with history, we need to draw the polyline on the map
-						});
-					}
-					else{
-						console.log("Turning OFF history tracking for " + clientName);
-						// Send a post request to the server telling it that we no longer want data for this guy
-						$.post( "api/client/set/historyReporting", {"clientName":clientName}, 
-										function( data ) {
-											console.log("Got data back");
-											console.log(data);
-										}
-						);
-
-						// Turn off it's current polyline
-						markers[clientName].historyPathLine.setMap(null);
-					}
-				});
-			});
-
-			$('#menu-container .menu-item .download').click(function(){
-				var clientName = this.name;
-				console.log("Clicked on download kml file for " + clientName);
-				var url = 'api/client/kmlcoords/'+clientName;
-				var params = {};
-				$.ajax({
-				    type: "GET",
-				    url:  url,
-				    data: params,
-				    success: function(response, status, request) {
-				        var disp = request.getResponseHeader('Content-Disposition');
-				        if (disp && disp.search('attachment') != -1) {
-				            var form = $('<form method="GET" action="'+url+'">');
-				            $.each(params, function(k, v) {
-				                form.append($('<input type="hidden" name="' + k +
-				                        '" value="' + v + '">'));
-				            });
-				            $('body').append(form);
-				            form.submit();
-				        }
-				    }
-				});
-			});
+			// var menuList = $('#menu-container ul');
+			// for(var i = 0; i<data.length; ++i){
+			// 	var menuItem = gimmeMenuItemHtml(data[i]);
+			// 	menuList.append(menuItem);
+			// }
+			
 	    },
 	    error: function(data) {
 	    	console.log("Getting list of clients in db failed");
@@ -180,25 +187,26 @@ function initMap(){
 				console.log(client.host + " Exists already");
 				markers[client.host].setPosition(latLng);
 				markers[client.host].infowindow.setContent(contentString);
-				var path = marker.historyPathLine.getPath();
+				var path = markers[client.host].historyPathLine.getPath();
 				if(client.config && client.config.keepHistory){
 					console.log("Setting polyline");
 					var latLng = new google.maps.LatLng( client.lat, client.lng );
 					path.push(latLng);
-					marker.historyPathLine.setMap(map);
+					markers[client.host].historyPathLine.setMap(map);
 				}
 				else{
 					// Turn off it's current polyline
-					marker.historyPathLine.setMap(null);
+					markers[client.host].historyPathLine.setMap(null);
 					// clear the array
 					//marker.historyPathLine.setPath([]);
 					while(path.getLength() > 0) path.pop(); 
 				}
 			}
-			// OK, it doesn't exist yet, create a new marker
+			// OK, This is the first time we have hear about this client
+			// We need to create/update everything
 			else{
 				console.log(client.host + " doesnt exist yet, creating it");
-				marker = new google.maps.Marker({
+				var marker = new google.maps.Marker({
 												position: latLng,
 												map: map,
 												title: client.host
@@ -211,10 +219,30 @@ function initMap(){
 
 				// Add that polyline piece
 				marker.historyPathLine = new google.maps.Polyline({
-					strokeColor: '#FF0000',
+					strokeColor: colorsList[colorIndex],
 					strokeOpacity: 1.0,
 					strokeWeight: 2
 				});
+
+				
+				// Check if this host already exists in the menu
+				var alreadyExistsInMenu = false;
+				$('#menu-container ul li').each(function(){
+					if(this.name == client.host){
+						alreadyExistsInMenu = true;
+					}
+				});
+
+				// Yeah, if it doesn't already exist, you should add it
+				if(!alreadyExistsInMenu){
+					$('#menu-container ul').append( gimmeMenuItemHtml(client.host, colorsList[colorIndex]) );
+				}
+
+				// WHOA! currently not checking for out of bounds error
+				++colorIndex;
+
+				// THis is not very efficient
+				setMenuCallbacks()
 
 				// in case we want to have it stick with a click
 				// google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
@@ -244,8 +272,8 @@ function initMap(){
 			// Only do this once for the first gps coord we get from a client. after that, leave it alone
 			if(!pannedMapYet){
 				map.panTo( latLng );
-				//map.setZoom(12);
-				smoothZoom(map, 12, map.getZoom());
+				map.setZoom(12);
+				//smoothZoom(map, 12, map.getZoom());
 				pannedMapYet = true;
 			}
 
