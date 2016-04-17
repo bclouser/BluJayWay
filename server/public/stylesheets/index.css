@@ -53,13 +53,34 @@ html, body {
 	display: inline-block;
 }
 
+#menu-container .menu-item .download .glyphicon {
+	padding: 10px;
+}
+
+#menu-container .items-container {
+	float: right;
+	height: calc( 100% - 64px );
+	overflow-y: auto;
+	overflow-x: hidden;
+	width: 100%;
+}
+
+#menu-container ul {
+	overflow:auto;
+}
+
+#menu-container ul li {
+	height: 90%;
+}
+
 #menu-container ul li:hover {
 	cursor: pointer;
 }
 
 #logo-container {
-	position: absolute;
-	bottom: 0;
+	/*position: absolute;*/
+	/*bottom: 0;*/
+	height: 64px;
 	width:100%;
 }
 

@@ -10,18 +10,27 @@ var colorIndex = 0;
 // Make things pretty
 var colorsList = [
 	// http://www.colourlovers.com/palette/1930/cheer_up_emo_kid
-	'#556270',
+	//'#556270',
 	'#4ECDC4',
-	'#C7F464',
+	//'#C7F464',
 	'#FF6B6B',
 	'#C44D58',
 
-	// http://www.colourlovers.com/palette/953498/Headache
-	'#655643',
-	'#80BCA3',
-	'#F6F7BD',
-	'#E6AC27',
-	'#BF4D28'
+	//http://www.colourlovers.com/palette/4222601/Quirkiness_Genes
+	'#9DB22E',
+	'#283878',
+	'#653180',
+	'#E12390',
+
+	//http://www.colourlovers.com/palette/4222589/what_was_first
+	'#0EE722',
+	'#0E79C2',
+
+	'#6E6E6E',
+
+	'#FCC206',
+	'#D5A9E0',
+	'#D5A9E0'
 ]
 
 // the smooth zoom function
@@ -210,7 +219,7 @@ function initMap(){
 												position: latLng,
 												map: map,
 												title: client.host,
-												icon:'images/RMS_HAWK_ICON.png'
+												icon:'images/RMS_HAWK_ICON_v2.png'
 											});
 
 				marker.setMap( map );

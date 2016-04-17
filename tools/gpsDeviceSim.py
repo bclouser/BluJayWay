@@ -2,21 +2,30 @@
 
 import socket
 import time
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("index")
+args = parser.parse_args()
 
+index = int(args.index)
+
+hostName = "HAWK-%02d" % index
+print hostName
 
 TCP_IP = '192.168.33.10'
 TCP_PORT = 5000
 BUFFER_SIZE = 1024
 
 lat = 38.920000;
-lng = -77.346357;
+lng = -77.346357 - (float(index)/100);
+
+
+print "Longitude = " + str(lng)
 
 currentSpeed = 11
 currentAlt = 41
 
-
 while(True):
-
 	if currentSpeed % 5:
 		currentSpeed += 1
 	else:
@@ -28,7 +37,7 @@ while(True):
 		currentAlt -= 4
 
 
-	MESSAGE = "{\"host\":\""+socket.gethostname()+"\", \"lat\":"+str(lat)+", \"lng\":"+str(lng)+", \"alt\":"+str(currentAlt)+",\"speed\":"+str(currentSpeed)+"}"
+	MESSAGE = "{\"host\":\""+hostName+"\", \"lat\":"+str(lat)+", \"lng\":"+str(lng)+", \"alt\":"+str(currentAlt)+",\"speed\":"+str(currentSpeed)+"}"
 	print MESSAGE;
 	try:
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
