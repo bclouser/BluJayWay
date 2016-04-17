@@ -209,7 +209,8 @@ function initMap(){
 				var marker = new google.maps.Marker({
 												position: latLng,
 												map: map,
-												title: client.host
+												title: client.host,
+												icon:'images/RMS_HAWK_ICON.png'
 											});
 
 				marker.setMap( map );

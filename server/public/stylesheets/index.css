@@ -57,6 +57,16 @@ html, body {
 	cursor: pointer;
 }
 
+#logo-container {
+	position: absolute;
+	bottom: 0;
+	width:100%;
+}
+
+#logo-container img {
+	height: auto;
+	width:100%;
+}
 
 
 
