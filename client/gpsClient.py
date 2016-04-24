@@ -7,10 +7,14 @@ class Client:
 		self.tcpPort = tcpPort
 
 	def publishCoords(self, coords):
+		if not coords:
+			print "publishCoords was sent null coords... We don't have valid coords yet"
+			return False
+
 		lat,lon,time,altitude,speed = coords
 		bufSize = 1024
 
-		message = "{\"coords\":{\"lat\":"+str(lat)+", \"lng\":"+str(lon)+", \"time\":\""+str(time)+"\", \"altitude\":"+str(altitude)+",\"speed\":"+str(speed)+"}}"
+		message = "{\"host\":\""+socket.gethostname()+"\",\"lat\":"+str(lat)+", \"lng\":"+str(lon)+", \"time\":\""+str(time)+"\", \"alt\":"+str(altitude)+",\"speed\":"+str(speed)+"}"
 		print message;
 		try:
 			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

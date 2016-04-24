@@ -24,20 +24,54 @@ class GpsPoller(threading.Thread):
 
 	def run(self):
 		global hasFix
+		counter = 0
 		try:
 			while True:
+				# if not hasFix:
+				# 	if counter == 0:
+				# 		print "|"
+				# 	elif counter == 1:
+				# 		print "/"
+				# 	elif counter == 2:
+				# 		print "-"
+				# 	elif counter == 3:
+				# 		print "\\"
+				# 	elif counter == 4:
+				# 		print "|"
+				# 	elif counter == 5:
+				# 		print "/"
+				# 	elif counter == 6:
+				# 		print "-"
+				# 	elif counter == 7:
+				# 		print "\\"
+				# 		counter = 0
+				# 	else:
+				# 		counter = 0
+				# 	counter += 1
+
 				report = self.session.next()
 				#print report
 
 				if report["class"]:
 					self.gpsdReady = True
 
-				# JTPV has the goods!
+				# TPV has the goods!
+				# http://www.catb.org/gpsd/client-howto.html#_interfacing_from_the_client_side
 				if report['class'] == "TPV" :
-					self.latestReport = report
-					hasFix = True
+					# mode = 1: we havn't yet gotten a lock from the satellites
+					# mode = 2: we have a 2d lock from satellites
+					# mode = 3: we have a 3d lock from satellites
+					if report['mode'] > 1:
+						hasFix = True
+
+				self.latestReport = report
+
+				
 
 				time.sleep(0.2)
+				# CURSOR_UP_ONE = '\x1b[1A'
+				# ERASE_LINE = '\x1b[2K'
+				# print(CURSOR_UP_ONE + ERASE_LINE + CURSOR_UP_ONE)
 
 		except KeyError:
 			pass
@@ -92,6 +126,7 @@ def hasLocationFix():
 	return hasFix
 
 def getCoords():
+	global hasFix
 	global lat
 	global lon
 	global gpsdThread
