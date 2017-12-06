@@ -35,3 +35,5 @@ secrets.js
 
 # Python ish
 *.pyc
+
+*.DS_Store

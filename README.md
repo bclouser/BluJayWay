@@ -25,4 +25,4 @@ npm start
 ![droneMapImage](https://raw.githubusercontent.com/bclouser/BluJayWay/master/docs/droneOnMap1.png)
 ![gEarthImage1](https://raw.githubusercontent.com/bclouser/BluJayWay/master/docs/googleEarth1.png)
 ![gEarthImage2](https://raw.githubusercontent.com/bclouser/BluJayWay/master/docs/googleEarth2.png)
-[Technical Guide](docs/Project BluJay - Technical Reference Guide v1)
+[Technical Guide](docs/Project BluJay - Technical Reference Guide v1.docx)
